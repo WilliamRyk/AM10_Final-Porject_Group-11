@@ -1,0 +1,105 @@
+---
+title: "Assignment1"
+author: "Mohan Fan"
+date: "2024-11-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+setwd("D:/桌面/个人文件/LBS/Data Visualization and Story Telling")
+london_bikes <- read.csv("london_bikes.csv")
+```
+
+# Prepare the *worst* possible visualisation
+```{r}
+library(ggplot2)
+
+ggplot(london_bikes, aes(x = cloud_cover, y = bikes_hired)) +
+  geom_point(color = "purple", alpha = 0.5, size = 4) +
+  geom_point(aes(x = humidity, y = bikes_hired), color = "black", shape = 4, size = 7) +
+  geom_text(aes(label = wday), color = "red", size = 10, vjust = -1) +
+  ggtitle("London Bike Hires vs. Clouds, Humidity, and Days of the Week") +
+  xlab("Cloud Cover (??)") +
+  ylab("Bikes Hired") +
+  theme(
+    plot.title = element_text(size = 25, face = "bold"),
+    axis.title.x = element_text(size = 20, color = "blue"),
+    axis.title.y = element_text(size = 20, color = "green")
+  ) +
+  theme(panel.grid.major = element_line(size = 1, color = "grey50"))
+
+```
+
+# Take the birthday data, and improve on the graph
+```{r}
+library(RColorBrewer)
+
+
+birthdays_data <- read.csv("births_1994_2014.csv")
+
+
+birthdays_data$full_date <- as.Date(birthdays_data$full_date)
+
+
+palette <- brewer.pal(9, "YlOrRd")
+
+ggplot(birthdays_data, aes(x = full_date, y = births)) +
+  geom_line(color = palette[5], size = 1.2) +
+  scale_x_date(date_labels = "%Y", date_breaks = "1 year") +
+  labs(
+    title = "Total Daily Births (1994-2014)",
+    x = "Date",
+    y = "Number of Births"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(size = 16, face = "bold")
+  )
+```
+
+# Stop and Search in London 
+```{r}
+library(dplyr)
+
+metropolitan_data <- read.csv("2022-09-metropolitan-stop-and-search.csv")
+
+
+ggplot(metropolitan_data, aes(x = Officer.defined.ethnicity)) +
+  geom_bar(fill = "skyblue", color = "black") +
+  labs(title = "Count of Searches by Officer-Defined Ethnicity",
+       x = "Ethnicity",
+       y = "Count of Searches") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+outcome_summary <- metropolitan_data %>%
+  group_by(Outcome) %>%
+  summarise(count = n())
+
+# Plot
+ggplot(outcome_summary, aes(x = "", y = count, fill = Outcome)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar("y") +
+  labs(title = "Proportion of Outcomes") +
+  theme_void() +
+  theme(legend.position = "right")
+
+library(sf)
+metropolitan_data <- metropolitan_data %>%
+  filter(!is.na(Latitude) & !is.na(Longitude)) %>%
+  st_as_sf(coords = c("Longitude", "Latitude"), crs = 4326)
+
+ggplot() +
+  geom_sf(data = metropolitan_data, aes(color = Type), alpha = 0.5) +
+  labs(title = "Search Locations by Type",
+       color = "Search Type") +
+  theme_minimal()
+
+```
+
